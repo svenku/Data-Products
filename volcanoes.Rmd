@@ -1,0 +1,53 @@
+---
+title: "Map of Significant Volcanic Eruptions"
+author: "Sven Kunsing"
+date: "12/30/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+The map below shows significant volcanic eruptions throughout history. Labels show the name of the volcano, year of eruption and number of related human deaths. The data is sourced from NOAA website (https://www.ngdc.noaa.gov/)
+
+```{r load, include = FALSE}
+library(tidyverse)
+library(leaflet)
+library(htmltools)
+data <- read.table('https://www.ngdc.noaa.gov/nndc/struts/results?type_0=Exact&query_0=$HAZ_EVENT_ID&t=102557&s=50&d=54&dfn=volerup.txt', header = TRUE, sep = '\t', quote = '', fileEncoding = 'UTF-8')
+
+data <- data %>%
+  mutate(dLabel = paste0('Name:', htmlEscape(Name),'<br>', 
+                        'Year:', htmlEscape(Year),'<br>',
+                        'Deaths:', htmlEscape(DEATHS)))
+
+data$dLabel <- gsub("\'","&#39;", data$dLabel)
+
+```
+
+
+```{r icon, include = FALSE}
+myIcon <- makeIcon(
+  iconUrl = "https://img.icons8.com/ios-glyphs/30/000000/volcano.png",
+  iconWidth = 30, iconHeight = 30,
+  iconAnchorX = 15, iconAnchorY = 15
+)
+```
+
+
+```{r leaflet_map, echo = FALSE}
+volcanoes <- 
+  as.data.frame(data) %>%
+    leaflet() %>%
+    addProviderTiles('CartoDB') %>%
+    addMarkers(lat = ~Latitude, lng = ~Longitude,
+               icon = myIcon,
+               label = ~dLabel,
+               clusterOptions = markerClusterOptions()
+               )
+volcanoes
+```
+
+
